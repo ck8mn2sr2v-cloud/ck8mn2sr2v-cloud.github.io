@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>平潭×福州 6日行程地图 · 11/10晚出发-11/16</title>
+<meta name="description" content="11/10晚赣州出发，平潭2.5天+福州3天，按11月天气窗口定制：电瓶车环岛+坛南湾转场。含门票、打车费用、避雷提醒与逐日时间轴。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+/* ═══════════════════════════════════════════
+   Design System — edit :root to change theme
+   ═══════════════════════════════════════════ */
+:root {
+  --bg-primary:    #ffffff;
+  --bg-secondary:  #f5f5f7;
+  --bg-tertiary:   #fbfbfd;
+  --bg-grouped:    #f2f2f7;
+  --bg-elevated:   #ffffff;
+  --text-primary:   #1d1d1f;
+  --text-secondary: #86868b;
+  --text-tertiary:  #aeaeb2;
+  --accent:        #0071e3;
+  --accent-hover:  #0077ed;
+  --tint-red:    #ff3b30;
+  --tint-orange: #ff9500;
+  --tint-green:  #34c759;
+  --tint-blue:   #007aff;
+  --tint-purple: #af52de;
+  --tint-pink:   #ff2d55;
+  --separator:  rgba(60, 60, 67, .12);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:  0 4px 14px rgba(0,0,0,.08);
+  --shadow-lg:  0 8px 30px rgba(0,0,0,.12);
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  20px;
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+               "Helvetica Neue", "Arial", sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.47059;
+  letter-spacing: -0.022em;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Map ── */
+#map { width: 100%; height: 40vh; min-height: 280px; position: sticky; top: 0; z-index: 100; }
+.locate-btn {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: rgba(255,255,255,.92); backdrop-filter: blur(8px);
+  border: none; box-shadow: 0 1px 4px rgba(0,0,0,.18);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.locate-btn.active { color: #007aff; }
+@keyframes loc-pulse {
+  0%   { transform: scale(1); opacity: .55; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+.loc-pulse {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: rgba(0,122,255,.25);
+  animation: loc-pulse 1.6s ease-out infinite;
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex; gap: 6px; padding: 12px 16px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  background: rgba(255,255,255,.85); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px); position: sticky; top: 40vh; z-index: 99;
+  border-bottom: .5px solid var(--separator); scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex-shrink: 0; padding: 7px 16px; border-radius: 980px; border: none;
+  background: var(--bg-grouped); color: var(--text-secondary);
+  font-size: 14px; font-weight: 500; cursor: pointer; transition: all .25s ease;
+  white-space: nowrap; letter-spacing: -0.01em;
+}
+.tab:active { transform: scale(.96); }
+.tab.active { background: var(--accent); color: #fff; }
+
+/* ── Main content ── */
+.content { max-width: 680px; margin: 0 auto; padding: 16px 16px calc(24px + var(--safe-bottom)); }
+
+/* ── Overview ── */
+.hero { text-align: center; padding: 28px 20px 20px; }
+.hero h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.15; }
+.hero .subtitle { font-size: 17px; color: var(--text-secondary); margin-top: 6px; font-weight: 400; }
+
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.info-card { background: var(--bg-elevated); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm); }
+.info-card .label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .02em; margin-bottom: 6px; }
+.info-card .value { font-size: 15px; font-weight: 600; line-height: 1.4; }
+
+/* ── Section headers ── */
+.section-head { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; padding: 20px 0 8px; }
+
+/* ── Day header ── */
+.day-head { padding: 20px 0 12px; }
+.day-head h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.day-head p { font-size: 15px; color: var(--text-secondary); margin-top: 2px; }
+
+/* ── Route bar ── */
+.route-bar { background: var(--bg-elevated); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; box-shadow: var(--shadow-sm); font-size: 13px; color: var(--text-secondary); line-height: 1.7; white-space: pre-line; }
+.route-bar strong { color: var(--text-primary); }
+
+/* ── Timeline ── */
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before { content: ''; position: absolute; left: 7px; top: 20px; bottom: 20px; width: 1.5px; background: var(--separator); }
+.tl-item { position: relative; margin-bottom: 10px; }
+.tl-dot { position: absolute; left: -20px; top: 18px; width: 10px; height: 10px; border-radius: 50%; z-index: 1; box-shadow: 0 0 0 3px var(--bg-secondary); }
+.tl-dot.food    { background: var(--tint-red); }
+.tl-dot.spot    { background: var(--tint-blue); }
+.tl-dot.hotel   { background: var(--tint-orange); }
+.tl-dot.drink   { background: var(--tint-purple); }
+.tl-dot.transport { background: var(--text-tertiary); }
+
+/* ── Card ── */
+.card { background: var(--bg-elevated); border-radius: var(--radius-md); padding: 14px 16px; box-shadow: var(--shadow-sm); transition: box-shadow .25s ease; cursor: pointer; }
+.card:active { box-shadow: var(--shadow-md); }
+.card .time { font-size: 12px; font-weight: 600; color: var(--text-tertiary); letter-spacing: .01em; }
+.card .name { font-size: 17px; font-weight: 600; margin: 2px 0 4px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 6px; }
+.card .desc { font-size: 14px; color: var(--text-secondary); line-height: 1.45; }
+
+/* Badge */
+.badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 4px; }
+.badge.food   { background: rgba(255,59,48,.1);  color: var(--tint-red); }
+.badge.spot   { background: rgba(0,122,255,.1);  color: var(--tint-blue); }
+.badge.drink  { background: rgba(175,82,222,.1); color: var(--tint-purple); }
+
+/* Budget */
+.budget { display: inline-block; margin-top: 6px; padding: 3px 10px; background: var(--bg-grouped); border-radius: var(--radius-sm); font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+
+/* Payment */
+.pays { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.pay { font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 600; }
+.pay.ok  { background: rgba(52,199,89,.1);  color: var(--tint-green); }
+.pay.no  { background: rgba(255,59,48,.08); color: var(--tint-red); }
+.pay.idk { background: rgba(255,149,0,.1);  color: var(--tint-orange); }
+
+/* Links row */
+.links { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600; border: none; cursor: pointer;
+  text-decoration: none !important; transition: filter .2s;
+}
+.btn:active { filter: brightness(.9); }
+.btn.nav    { background: var(--accent); color: #fff; }
+.btn.xhs    { background: #ff2442; color: #fff; }
+.btn.dp     { background: #ffa700; color: #fff; }
+.btn.rsv    { background: var(--tint-green); color: #fff; }
+/* 长按复制提示条 */
+#copyTip {
+  position: fixed; left: 50%; bottom: 90px; transform: translate(-50%, 20px);
+  background: rgba(29,29,31,.92); color: #fff; font-size: 13px; font-weight: 500;
+  padding: 10px 18px; border-radius: 999px; opacity: 0; pointer-events: none;
+  transition: opacity .25s, transform .25s; z-index: 9999; white-space: nowrap;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+#copyTip.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Action Sheet */
+.as-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.35); backdrop-filter: blur(2px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.as-overlay.show { opacity: 1; pointer-events: auto; }
+.as-sheet {
+  width: 100%; max-width: 420px;
+  padding: 0 8px 34px;
+  transform: translateY(100%); transition: transform .3s cubic-bezier(.22,1,.36,1);
+}
+.as-overlay.show .as-sheet { transform: translateY(0); }
+.as-group {
+  background: rgba(255,255,255,.88); backdrop-filter: blur(20px);
+  border-radius: 14px; overflow: hidden; margin-bottom: 8px;
+}
+.as-group .as-item {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 16px; font-size: 18px; color: #007aff; font-weight: 500;
+  border: none; background: none; width: 100%; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.as-group .as-item + .as-item { border-top: .5px solid rgba(0,0,0,.12); }
+.as-group .as-item:active { background: rgba(0,0,0,.06); }
+.as-cancel { font-weight: 600; }
+
+/* Details — default open */
+.details {
+  margin-top: 10px; padding-top: 10px;
+  border-top: .5px solid var(--separator);
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+}
+.details.closed { display: none; }
+
+/* ── Overview day list ── */
+.day-list .card { margin-bottom: 8px; }
+.day-list .card .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+
+/* ── Payment summary ── */
+.pay-summary { background: var(--bg-elevated); border-radius: var(--radius-md); padding: 14px 16px; box-shadow: var(--shadow-sm); font-size: 13px; line-height: 1.7; margin-bottom: 10px; }
+.pay-summary h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.pay-summary .warn { color: var(--tint-red); }
+.pay-summary .ok-text { color: var(--tint-green); }
+
+/* ── Legend ── */
+.legend { display: flex; gap: 14px; flex-wrap: wrap; padding: 8px 0; font-size: 12px; color: var(--text-secondary); }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* ── Leaflet overrides ── */
+.leaflet-popup-content-wrapper { border-radius: var(--radius-md) !important; box-shadow: var(--shadow-lg) !important; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important; }
+.leaflet-popup-content { font-size: 14px !important; line-height: 1.5 !important; margin: 12px 14px !important; }
+.leaflet-popup-content a { color: var(--accent) !important; }
+.leaflet-popup-tip { background: #fff !important; }
+.leaflet-control-zoom a { width: 34px !important; height: 34px !important; line-height: 34px !important; font-size: 16px !important; border-radius: 10px !important; background: rgba(255,255,255,.85) !important; -webkit-backdrop-filter: blur(10px) !important; backdrop-filter: blur(10px) !important; border: .5px solid var(--separator) !important; color: var(--text-primary) !important; }
+.leaflet-control-zoom { border-radius: 12px !important; overflow: hidden; box-shadow: var(--shadow-md) !important; border: none !important; }
+.leaflet-control-attribution { font-size: 9px !important; opacity: .5; }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+<div class="tabs" id="tabs"></div>
+<div class="content" id="content"></div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  REPLACE THIS SECTION — Hotel and Days data                 ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+const HOTEL = { name: '岚悦雅居客栈·龙王头沙滩店(D1-D2)', lat: 25.4995, lng: 119.7990 };
+
+const DAYS = [
+  { id: 0, label: '总览', color: '#0071e3', locations: [] },
+  { id: 1, label: 'D1 平潭', date: '11/11 周三 · 阴 18~21℃ 无雨（全程最好）', title: '中午上岛 · 海鲜粥 · 龙王头日落 + 龙山俚夜市', color: '#ff9500', locations: [
+    { name: '平潭站', lat: 25.4978, lng: 119.7825, type: 'transport', time: '11:25', desc: '已购联程抵达：K1282赣州→南昌 + Z217南昌→福州 + D6421福州→平潭，三程共187.5元/人', detail: '出站右手出租车排队点。\n福州站换乘只有19分钟，下车即走。', gmap: encodeURIComponent('平潭站 平潭'), pay: { alipay: 1, wechat: 1, cash: 0.5 } },
+    { name: '毛记海鲜砂锅粥·总店(午餐)', lat: 25.5030, lng: 119.7925, type: 'food', time: '12:00', desc: '龙凤东路明通大厦一楼30-6号（皇家紫荆城隔壁），福州粥店热榜第1名：招牌海鲜砂锅粥现熬现卖、虾蟹粥料足', budget: '人均 57 元', detail: '营业10:00-次日03:00，饭点排队进店先取号，有包间。\n到店可领 19.9元购20元代金券。', gmap: encodeURIComponent('毛记海鲜砂锅粥 平潭'), dianpingKeyword: '毛记海鲜砂锅粥 平潭' },
+    { name: '岚悦雅居客栈（龙王头沙滩店）', lat: 25.4995, lng: 119.7990, type: 'hotel', time: '13:40', desc: '吃完打车回酒店（约3km/10元），午睡到16:00定闹钟起床——夜车连轴14小时，这觉是刚需', budget: '已订 · 2晚', detail: '海坛街道红山西路盛东庄129号。\n免费行李寄存/洗衣房。', gmap: encodeURIComponent('岚悦雅居客栈 龙王头 平潭') },
+    { name: '龙王头海滨浴场', lat: 25.5041, lng: 119.8077, type: 'spot', time: '16:00', desc: '酒店步行5-10分钟即到（懒得走打车约8元）：9.5km细沙滩散步看浪，日落约17:13，沙滩上看晚霞收尾', budget: '免费', detail: '11月不下水。阴天东北风4级，日落前后体感凉，加外套。', gmap: encodeURIComponent('龙王头海滨浴场 平潭'), xhsKeyword: '平潭 龙王头' },
+    { name: '龙山俚夜市', lat: 25.4868, lng: 119.7978, type: 'food', time: '17:50', desc: '龙山路199号，平潭夜市新地标（原车站夜市84户老摊整体迁入，124家商户）：台湾盐酥鸡、平潭海蛎饼、湖南麻辣烫+长沙臭豆腐（2020年上过平潭电视台的口碑老摊）、烤生蚝', budget: '人均 53 元', detail: '龙王头打车约2.5km/9元。\n每晚19:00露天电影；复古宝岛街景可拍照。21:00打车回酒店同价。', gmap: encodeURIComponent('龙山俚夜市 平潭'), dianpingKeyword: '龙山俚夜市 平潭' }
+  ]},
+  { id: 2, label: 'D2 平潭', date: '11/12 周四 · 阴转小雨概率60% 20~22℃ · 东北风4-5级', title: '电瓶车环岛日：煎包早餐 → 仙人井 → 北港 → 最美环岛路 → 镜沙 → 长江澳', color: '#34c759', locations: [
+    { name: '岚悦雅居客栈·楼下取车', lat: 25.4995, lng: 119.7990, type: 'transport', time: '08:30', desc: '老板提前把车送到酒店楼下，8:30准时出发；出发前验车三件事：看仪表续航（150km+锂电）、拍外观视频留证、戴好双人头盔', budget: '60-120 元/天 · 押金300-500可免押', detail: '⚠️ 28-45元/天的多为铅酸车（续航30-40km），北线65km必趴窝。\n当天东北风4-5级，环岛路北段逆风，控制车速。', gmap: encodeURIComponent('岚悦雅居客栈 龙王头 平潭') },
+    { name: '韩氏煎包店(早餐)', lat: 25.5024, lng: 119.7908, type: 'food', time: '08:45', desc: '东大街10号，收藏9年老店（4.0分/376条评价）：招牌韩式煎包2元/个，一人2个共4元', budget: '人均 4 元', detail: '营业5:30-19:30。\n到店套餐5个25元（原价40）更划算，两人一提刚好。', gmap: encodeURIComponent('韩氏煎包店 平潭'), dianpingKeyword: '韩氏煎包店 平潭' },
+    { name: '东海仙境·仙人井', lat: 25.5477, lng: 119.8877, type: 'spot', time: '09:15', desc: '天然海蚀竖井，直径近50米、深40余米，涨潮时浪拍井壁最壮观；酒店骑行约15km', budget: '门票 33 元', detail: '开放8:00-17:30，16:55停止入园。\n环岛路沿途就是风景，随停随拍。', gmap: encodeURIComponent('东海仙境 平潭'), xhsKeyword: '平潭 东海仙境 仙人井' },
+    { name: '北港村·四果汤小吃(午餐)', lat: 25.6163, lng: 119.8997, type: 'food', time: '11:00', desc: '石头厝古村（《爸爸去哪儿》取景地），"石头会唱歌"工坊打卡；午餐村内小吃+四果汤：海蛎饼、阿嬷的灶咖"天长地久"（红糖花生馅流心）、冰爽四果汤', budget: '人均 15-25 元', detail: '想吃正餐：岸上渔夫大排档（北港76号，人均80，11:50前到店）。\n车停村内指定停放点。', gmap: encodeURIComponent('北港村 平潭'), dianpingKeyword: '北港村 平潭 美食', xhsKeyword: '平潭 北港村 石头厝' },
+    { name: '最美环岛路（北港—长江澳段）', lat: 25.6320, lng: 119.8600, type: 'spot', time: '13:30', desc: '环岛路北段依山面海，连续弯道+海景观景平台，边骑边停随手出片——平潭骑行精华路段', budget: '免费', detail: '⚠️ 全程风最大路段（当天东北风4-5级），防风外套拉好，下坡减速。', gmap: encodeURIComponent('平潭 最美环岛路'), xhsKeyword: '平潭 最美环岛路' },
+    { name: '镜沙黑石滩', lat: 25.5846, lng: 119.8842, type: 'spot', time: '15:00', desc: '黑礁石+白浪，"小冰岛"机位，游客少', budget: '免费', detail: '礁石湿滑，不在崖边久留。', gmap: encodeURIComponent('镜沙 平潭'), xhsKeyword: '平潭 镜沙' },
+    { name: '长江澳风车田', lat: 25.6268, lng: 119.8150, type: 'spot', time: '16:00', desc: '白色风车群+滩涂日落剪影（约17:13），平潭日落最佳机位', budget: '免费', detail: '日落结束立即返程（骑行14km/35分钟），回酒店电话联系老板上门收车；夜骑开灯靠边慢行。\n中途没电：智城骑行换电柜在景区与城区有布点，回程电量低于30%先进北港或流水镇换电。', gmap: encodeURIComponent('长江澳风车田 平潭'), xhsKeyword: '平潭 长江澳 日落' },
+    { name: '岚悦雅居客栈·还车', lat: 25.4995, lng: 119.7990, type: 'transport', time: '17:40', desc: '日落结束立即返程，电话联系老板上门收车', detail: '夜骑开灯、靠边慢行。' },
+    { name: '肥婆肥仔海鲜档·市场店(晚餐)', lat: 25.5058, lng: 119.7902, type: 'food', time: '18:30', desc: '莲花东路平潭关水产品市场1楼（4.4分/1万+评价，福州鱼丸海鲜打卡人气榜第1名，290当地人推荐）：海鲜市场现捞现做，椒盐水煮小管、生蚝、鱼丸汤', budget: '人均 103 元', detail: '营业11:30-23:30，饭点排队可先取号；距平潭森林公园20米，饭后可散步消食。\n⚠️ 点菜先看价目表、活鲜过秤再下锅。\n避雷：红星平潭海鲜（网红大店）差评集中在预制菜、价贵。', gmap: encodeURIComponent('肥婆肥仔海鲜档 平潭'), dianpingKeyword: '肥婆肥仔海鲜档 市场店 平潭' }
+  ]},
+  { id: 3, label: 'D3 转场', date: '11/13 周五 · 平潭小雨→福州小雨', title: '坛南湾·田美澳 + 崎沙澳 · 高铁回福州 · 晚上朱富贵火锅', color: '#af52de', locations: [
+    { name: '岚悦雅居客栈·退房寄存行李', lat: 25.4995, lng: 119.7990, type: 'hotel', time: '08:15', desc: '先退房、行李免费寄存前台，轻装去海边；11:00 回来取行李直接走', gmap: encodeURIComponent('岚悦雅居客栈 龙王头 平潭') },
+    { name: '坛南湾·田美澳沙滩', lat: 25.4640, lng: 119.7950, type: 'spot', time: '09:00', desc: '平潭岛东南部，22公里"白金海岸"主沙滩：白色阶梯、爱心座椅、海边秋千、懒人沙发，退潮有"天空之镜"；配套最全（冲洗间/咖啡）', budget: '免费 · 观光车15元不限次', detail: '酒店打车约10km/20分钟/约22元。\n小雨天沙滩几乎没人，反而好拍；11月海水凉别下水。\n三个澳口都有官方免费停车场，别停路边私人收费场。', gmap: encodeURIComponent('坛南湾 田美澳 平潭'), dianpingKeyword: '坛南湾 田美澳 平潭', xhsKeyword: '平潭 坛南湾 田美澳' },
+    { name: '坛南湾·崎沙澳', lat: 25.4555, lng: 119.8030, type: 'spot', time: '10:20', desc: '坛南湾13段海湾里最安静的一段：黑礁石+白浪"冰与火"，海湾朝西是落日机位，人最少最适合坐着听浪', budget: '免费', detail: '田美澳步行约1.5km/20分钟，或观光车1站。\n⚠️ 礁石湿滑，涨潮时不上礁石、不走偏僻岸段。', gmap: encodeURIComponent('坛南湾 崎沙澳 平潭'), xhsKeyword: '平潭 崎沙澳' },
+    { name: '岚悦雅居客栈·取行李', lat: 25.4995, lng: 119.7990, type: 'hotel', time: '11:00', desc: '回客栈取寄存行李、正式退房', gmap: encodeURIComponent('岚悦雅居客栈 龙王头 平潭') },
+    { name: '午餐·海堤厦门沙茶面(雅阁店)', lat: 25.5035, lng: 119.8085, type: 'food', time: '11:50', desc: '海坛街道东门庄111号东昇花园107号店面（距酒店约1km）：4.3分/802条、平潭县面馆环境榜第2名；海鲜沙茶面汤头沙茶浓郁', budget: '人均 28 元（豪华海鲜套餐31.8 · 7.1折省13.2）', detail: '营业07:30-23:00，有停车场；人气款21.8（8.1折）、牛肉丸款23.8。\\n备选：食为福八珍炒糕（潭城翠园路，人均30）。\\n饭后打车约5km/15元到平潭站，赶13:48 D6279。', gmap: encodeURIComponent('海堤厦门沙茶面 平潭'), dianpingKeyword: '海堤厦门沙茶面 雅阁店 平潭' },
+    { name: '平潭站', lat: 25.4978, lng: 119.7825, type: 'transport', time: '13:20', desc: '13:48 D6279 回福州（约50元 / 45-55分钟）；打车约5km/15元', budget: '约 50 元', gmap: encodeURIComponent('平潭站') },
+    { name: '东街口酒店·入住', lat: 26.0847, lng: 119.2983, type: 'hotel', time: '14:00', desc: '福州站过来：地铁1号线福州火车站→东街口（4站约10分钟 / 2元，步行5-10分钟到店）；拖箱子打车约6km/20分钟/18元', detail: '选可免费取消房型；11月淡季周末前后班次房会先满。\n东街口是全程几何中心，去西湖、上下杭、烟台山、福州站都在1号线上，每段2元。', gmap: encodeURIComponent('福州 东街口') },
+    { name: '西湖公园', lat: 26.0889, lng: 119.2877, type: 'spot', time: '16:00', desc: '1700多年历史的园林，"福州留园"，柳堤烟雨正应景；17:20收尾回东街口吃火锅', budget: '免费', detail: '交通：地铁1号线东街口→屏山1站/2元，D口出步行约1km；打车约3km/11元。\n回程：屏山→东街口1站/2元，或步行约1.2km/15分钟。\n小雨天有园林韵味；游船风大停开。', gmap: encodeURIComponent('福州西湖公园') },
+    { name: '晚餐·朱富贵海鲜火锅(大洋百货店)', lat: 26.0836, lng: 119.3008, type: 'food', time: '17:40', desc: '八一七北路133号大洋百货5楼（东街口地铁A口出步行3分钟）：一人一锅自选海鲜，花胶鸡锅底12元先喝汤，罗氏虾/明虾/鲍鱼/生蚝/皮皮虾；按盘计价（铁盘约15元），吃不完不能退', budget: '人均约 100 元（3人折后230-280）', detail: '⚠️ 排队王：到店前先用小程序取号（3-4人桌），周五18点后开始等位；等太久换恒力城店（五四路128号负一层）或台江万达店（鳌江路金融街万达负一层）。\n结账前在前台扫码进群领会员价（常见6.8折）；少量多次拿盘子。\n饭后地铁东街口→达道4站/2元去上下杭看夜景，或打车约4km/13元。', gmap: encodeURIComponent('朱富贵海鲜火锅 大洋百货 福州'), dianpingKeyword: '朱富贵海鲜火锅 福州', xhsKeyword: '福州 朱富贵 海鲜火锅 攻略' },
+    { name: '上下杭', lat: 26.0502, lng: 119.3027, type: 'spot', time: '19:40', desc: '饭后消食：三捷河两岸老会馆、古桥、骑楼，19点后灯笼全亮最出片', budget: '免费', detail: '地铁1号线东街口→达道4站/2元+步行600m；打车约4km/13元。\n回酒店：达道→东街口4站/2元（末班约23:00），或打车约13元。', gmap: encodeURIComponent('上下杭 福州'), xhsKeyword: '福州 上下杭 夜景' }
+  ]},
+  { id: 4, label: 'D4 福州', date: '11/14 周六 · 阴 19~28℃ 全周最好', title: '三坊七巷逛吃 · 烟台山漫步 · 上下杭逛吃 · 解放大桥日落', color: '#0071e3', locations: [
+    { name: '三坊七巷·坊巷逛吃', lat: 26.0810, lng: 119.2973, type: 'spot', time: '08:30', desc: '半部中国近代史：林觉民·冰心故居、严复故居、黄巷郎官巷深入；周六务必赶早', budget: '街区免费 · 故居单馆15-20元', detail: '交通：酒店步行约800m/10分钟（0元）；雨天可地铁1号线东街口站A口出即到坊区东侧（2元）。\n逛吃两连：同利肉燕老铺·三坊七巷店（南后街98号B区，140年非遗、必吃榜2026，4.0分/1.4万+条，肉燕18-25元/碗）+ 后街捞化·衣锦坊店（通湖路236号，衣锦坊公交站20米，收录11年，4.3分/7300+条，老汤自选烫煮，人均31）。\n到下一个点烟台山：东街口站地铁1号线→上藤站B口（4站约10分钟/2元，加两端步行约25分钟）；打车约4.5km/15元。', gmap: encodeURIComponent('三坊七巷 福州'), xhsKeyword: '三坊七巷 游玩攻略' },
+    { name: '后街捞化·衣锦坊店', lat: 26.0818, lng: 119.2937, type: 'food', time: '10:00', desc: '通湖路236号：捞化老汤自选烫煮（虾仁/猪腰/鱿鱼/罗汉肉配兴化粉），早午餐正合适', budget: '人均 31 元', detail: '营业07:00-23:00，有停车场；到店可抢10元代金券。', gmap: encodeURIComponent('后街捞化 衣锦坊店 福州'), dianpingKeyword: '后街捞化 衣锦坊店 福州' },
+    { name: '烟台山·漫步街区', lat: 26.0427, lng: 119.3101, type: 'spot', time: '11:30', desc: '地铁1号线东街口→上藤（4站约10分钟/2元），B口出步行800m到万春巷；打车约4.5km/15元。按序走不回头：万春巷 → 最美拐角 → 仓山影院 → 烟台山公园 → 槐荫里 → 石厝教堂 → 商业漫步街区', budget: '免费', detail: '午餐就在商业漫步街区解决：咖啡馆轻食或闽菜小馆（人均40-60），也可只喝咖啡垫一下、把这顿留给上下杭逛吃。\n石厝教堂百年银杏11月转黄正当季；坡路多穿好走的鞋。\n伴手礼：梅峰饼屋绿豆糕、肉松饼。', gmap: encodeURIComponent('烟台山 福州'), xhsKeyword: '福州 烟台山 最美拐角' },
+    { name: '上下杭·逛吃', lat: 26.0523, lng: 119.3032, type: 'food', time: '15:30', desc: '地铁1号线上藤→达道1站/2元（加两端步行约20分钟），或打车约4km/15分钟/13元；三捷河两岸老会馆、古桥、骑楼，边逛边吃', budget: '人均 85 元（正餐60+小吃25）', detail: '河畔闽菜小馆（古街侧巷，红烧牛腩、蛏子溜）+ 锅边糊、海蛎饼、芋泥、花生汤。\n⚠️ 18点后灯笼才亮，先逛吃、看完日落再回来补夜景。\n17:00必须动身步行去江边（900m/10分钟）。', gmap: encodeURIComponent('上下杭 福州'), xhsKeyword: '福州 上下杭 夜景' },
+    { name: '解放大桥·中洲岛（日落）', lat: 26.0485, lng: 119.3095, type: 'spot', time: '17:10', desc: '福州日落约17:15沉进闽江，两岸灯光次第亮起，中洲岛夜景同框；亮灯后蓝调时刻拍到18:10', budget: '免费', detail: '当晚最佳收尾机位；日落后走回上下杭看三捷河灯笼夜景，或直接回酒店（地铁达道→东街口4站/2元，打车约13元）。', gmap: encodeURIComponent('解放大桥 中洲岛 福州'), xhsKeyword: '福州 解放大桥 日落' }
+  ]},
+  { id: 5, label: 'D5 福州', date: '11/15 周日 · 小雨（室内行程兜底）', title: '博物院 · 西禅古寺 · 福道 · 达明路', color: '#ff2d55', locations: [
+    { name: '福建博物院', lat: 26.0907, lng: 119.2847, type: 'spot', time: '09:00', desc: '镇馆之宝：云纹青铜大铙、五代闽国鎏金铜狮；地铁1号线东街口→屏山1站/2元，D口出步行960m；打车约3km/11元', budget: '免费（周一闭馆已避开）', detail: '需带身份证。\\n雨天打车直达湖头街96号门口更省事。', gmap: encodeURIComponent('福建博物院') },
+    { name: '西禅古寺', lat: 26.0702, lng: 119.2640, type: 'spot', time: '11:20', desc: '福州五大禅林之一，闹市唐风古刹：放生池九曲桥→大雄宝殿→玉佛楼→五百罗汉堂→报恩塔→千年宋荔；报恩塔67米凭票可登塔（登塔时段9:00-11:00/14:00-16:00）', budget: '门票 20 元', detail: '交通：博物院打车约4km/12分钟/13元；或地铁屏山→东街口换4号线→凤凰池站B/D口步行10分钟（约40分钟/4元）。\\n开放7:00-18:00，16:30停止检票；现场购票无需预约。\\n大雄宝殿旁有免费赠香处，别买门口商贩高价香；殿内佛像勿拍照。', gmap: encodeURIComponent('西禅古寺 福州'), xhsKeyword: '福州 西禅古寺 攻略' },
+    { name: '午餐·荔香楼素斋(西禅寺内)', lat: 26.0700, lng: 119.2650, type: 'food', time: '12:30', desc: '报恩塔旁的寺内素菜馆：素荔枝肉、十八罗汉煲、罗汉斋，窗边可看院景', budget: '人均 35-40 元', detail: '清淡养胃不油腻；出寺步行5-12分钟也有锅边糊、鱼丸等本地小吃（人均20左右）。', gmap: encodeURIComponent('西禅古寺 荔香楼 福州'), dianpingKeyword: '西禅寺 素斋 福州' },
+    { name: '福道（梅峰段）', lat: 26.0955, lng: 119.2740, type: 'spot', time: '15:00', desc: '全国最美森林步道之一，钢架镂空栈道穿行林梢俯瞰福州城；走梅峰山地公园3号口→5号口精华段约1小时', budget: '免费', detail: '交通：西禅古寺打车约3km/10分钟/11元。\\n亮灯到22:00；钢架路面雨天稍滑，穿防滑底鞋慢走。\\n雨大或走累了可砍掉这段，直接去达明路吃饭。', gmap: encodeURIComponent('福道 梅峰山地公园 福州'), xhsKeyword: '福州 福道' },
+    { name: '达明路美食街(晚餐)', lat: 26.0872, lng: 119.2948, type: 'food', time: '17:10', desc: '耳聋伯元宵（达明路76号，咸口肉馅元宵10元/碗，四代传承）+捞化+鱼丸+芋泥花生汤', budget: '人均 40 元', detail: '交通：福道5号口打车约4km/15分钟/13元。', gmap: encodeURIComponent('达明美食街 福州'), dianpingKeyword: '达明美食街 福州' },
+    { name: '饭后散步·三坊七巷南后街', lat: 26.0810, lng: 119.2973, type: 'spot', time: '18:30', desc: '达明路步行600m到南后街，沿坊巷慢走看灯笼夜景消食收尾，走完步行约800m回酒店', budget: '免费', detail: '全程步行0元；不想走远就在东街口商圈转转。', gmap: encodeURIComponent('三坊七巷 南后街 福州'), xhsKeyword: '三坊七巷 夜景' }
+  ]},
+  { id: 6, label: 'D6 返程', date: '11/16 周一 · 小雨', title: '09:48 联程返赣州 · 傍晚 17:35 到家', color: '#8e8e93', locations: [
+    { name: '福州站', lat: 26.1174, lng: 119.3209, type: 'transport', time: '09:48', desc: 'D6312 二等座87.5元 → 永安南11:39；酒店出发地铁1号线东街口→福州火车站4站/2元从容到站（首选），或打车6km/20分钟/15元', budget: '第一程 87.5 元', detail: '不用早起：7:30起床退房、8:30出发，在酒店周边吃顿正经早餐再走。\n地铁首班6:30后随到随走，时间充裕。\n行李前一晚收好。', gmap: encodeURIComponent('福州站') },
+    { name: '永安南站·同站换乘', lat: 26.0352, lng: 117.3180, type: 'transport', time: '11:39', desc: '同站换乘39分钟，不出站走「便捷换乘」通道；间隙在站内便利店买午餐和水带上车（普速车餐食一般）', budget: '换乘免费 · 午餐 15-20 元', detail: '万一D6312晚点不慌：K8756为同站后续接续，极端情况找车站改签。\nK8756后半段5个多小时硬座，颈枕、耳塞、充电宝都用上。', gmap: encodeURIComponent('永安南站') },
+    { name: '赣州站·到家', lat: 25.8453, lng: 114.9205, type: 'transport', time: '17:35', desc: 'K8756 硬座50.5元（经停瑞金等），17:35 到赣州；两程合计约138元，比直达动车省70-90元/人', budget: '第二程 50.5 元 · 合计约 138 元', detail: '到家正好吃晚饭。\n全程约7小时47分：动车1小时51分+换乘39分钟+普速5小时17分。', gmap: encodeURIComponent('赣州站') }
+  ]}
+];
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  REPLACE THIS SECTION — Overview tab content                ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+function overviewContent() {
+  return `
+<div class="hero"><h1>平潭×福州 6日行程地图</h1><p class="subtitle">11/10晚赣州出发 - 11/16 · 先海岛抓晴、后古城避雨（按天气窗口定制）</p></div>
+<div class="info-grid">
+  <div class="info-card"><div class="label">住宿</div><div class="value">平潭·岚悦雅居客栈（龙王头沙滩店）2晚 + 福州东街口3晚<br><span style="font-size:12px;color:#86868b">平潭已订 · 免费行李寄存 · 福州选可免费取消</span></div></div>
+  <div class="info-card"><div class="label">大交通（已购）</div><div class="value">11/10 21:38 K1282 赣州→南昌<br><span style="font-size:12px;color:#86868b">+ Z217南昌→福州 + D6421→平潭 11/11 11:25到 · 共187.5元/人</span></div></div>
+  <div class="info-card"><div class="label">岛内用车</div><div class="value">11/12 电瓶车环岛（60-120元/天）<br><span style="font-size:12px;color:#86868b">其余打车 · 福州地铁1号线+打车</span></div></div>
+  <div class="info-card"><div class="label">预估费用</div><div class="value">人均约 1180 元（1100-1260）<br><span style="font-size:12px;color:#86868b">返程联程约138元已省70-90 · 含朱富贵火锅</span></div></div>
+</div>
+<div class="section-head">行程概览</div>
+<div class="day-list">${DAYS.slice(1).map(d=>`<div class="card" onclick="go(${d.id})"><div class="name"><span class="dot" style="background:${d.color}"></span>${d.label} · ${d.title}</div><div class="desc">${d.date}</div></div>`).join('')}</div>
+<div class="section-head">支付提醒</div>
+<div class="pay-summary"><h4>⚠️ 必须提前办的事</h4>
+· <b>电瓶车</b>：11/8 前线上预订 11/12 的车，选续航150km+锂电池车（低价车多为30-40km续航铅酸车）；<b>约好老板 11/12 早上把车送到酒店楼下</b><br>
+· <b>朱富贵火锅</b>（11/13 晚，3 人）：小程序提前取号（选 3-4 人桌），周五 18 点后开始排队；到店结账前扫码进群领会员价<br>
+· <b>坛南湾（田美澳/崎沙澳）</b>：免费、24小时开放、<b>无需预约</b>，只需出发前查潮汐与天气<br>
+· <b>返程票</b>：12306 锁定 11/13 平潭→福州（13:48 D6279前后）+ <b>11/16 联程 09:48 D6312 福州→永安南（二等87.5）+ 12:18 K8756 永安南→赣州（硬座50.5），合计约138元，17:35到赣州</b>；福州站换乘19分钟记牢"下车即走"<br>
+· <b>住宿</b>：平潭2晚已订；福州3晚选青旅/经济拼房（压预算关键项），下单选可免费取消房型
+</div>
+<div class="pay-summary"><h4>🚫 避雷速记</h4>
+· 平潭海鲜排档：进店先看价目表、点菜过秤再下锅<br>
+· <span class="warn">11月没有蓝眼泪</span>，"带你看蓝眼泪"收费全是套路<br>
+· 电瓶车租车：报价28-45元的多是杂牌铅酸车；取车拍视频留证、全程戴头盔、不酒后骑车<br>
+· 三坊七巷南后街主街是游客价，正餐往塔巷/吉庇巷/上下杭侧巷里拐
+</div>
+<div class="pay-summary"><h4>🎒 必备物品</h4>
+颈枕+耳塞（夜车硬座8小时）· 防风外套（海边风大4-5级，骑行更冷）· 头盔（租车店有）· 一次性雨衣 · 防滑鞋 · 身份证 · 充电宝
+</div>
+<div class="section-head">图例</div>
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tint-red)"></div>餐厅</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tint-blue)"></div>景点</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tint-purple)"></div>饮品/甜点</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tint-orange)"></div>酒店</div>
+</div>
+<p style="font-size:11px;color:#aeaeb2;margin-top:12px">坐标为参考位置，导航请以点位实际搜索结果为准 · 车费为估算 · 完整图文版见《平潭福州6日游定制方案.html》</p>`;
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  ENGINE — Do not modify below unless customizing behavior   ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+const map = L.map('map', { center: [HOTEL.lat || 35.69, HOTEL.lng || 139.74], zoom: 12, zoomControl: false, attributionControl: true });
+L.control.zoom({ position: 'topright' }).addTo(map);
+L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', { maxZoom: 18, subdomains: ['1','2','3','4'], attribution: '© 高德地图' }).addTo(map);
+
+/* ── Geolocation ── */
+const LocateControl = L.Control.extend({
+  options: { position: 'bottomright' },
+  onAdd() {
+    const btn = L.DomUtil.create('button', 'locate-btn');
+    btn.innerHTML = '📍';
+    btn.title = '我的位置';
+    L.DomEvent.disableClickPropagation(btn);
+    btn.addEventListener('click', () => {
+      btn.classList.add('active');
+      map.locate({ setView: true, maxZoom: 15 });
+    });
+    this._btn = btn;
+    return btn;
+  }
+});
+new LocateControl().addTo(map);
+let locMarker, locCircle;
+map.on('locationfound', e => {
+  const r = e.accuracy / 2;
+  if (locMarker) { locMarker.setLatLng(e.latlng); locCircle.setLatLng(e.latlng).setRadius(r); }
+  else {
+    locMarker = L.marker(e.latlng, {
+      icon: L.divIcon({ className:'', html:'<div style="width:14px;height:14px;border-radius:50%;background:#007aff;border:2.5px solid #fff;box-shadow:0 0 6px rgba(0,122,255,.5)"></div><div class="loc-pulse" style="position:absolute;top:0;left:0"></div>', iconSize:[14,14], iconAnchor:[7,7] }),
+      zIndexOffset: 2000
+    }).addTo(map);
+    locCircle = L.circle(e.latlng, { radius: r, color: '#007aff', fillColor: '#007aff', fillOpacity: .08, weight: 1 }).addTo(map);
+  }
+});
+map.on('locationerror', () => {});
+
+function icon(color, emoji) {
+  return L.divIcon({ className: '', html: `<div style="width:28px;height:28px;border-radius:50%;background:${color};border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.18)">${emoji||''}</div>`, iconSize: [28,28], iconAnchor: [14,14], popupAnchor: [0,-16] });
+}
+
+if (HOTEL.lat) L.marker([HOTEL.lat, HOTEL.lng], { icon: icon('#ff9500','🏨'), zIndexOffset: 1000 }).addTo(map).bindPopup(`<b>${HOTEL.name}</b>`);
+
+let markers = [], polylines = [];
+const emojis = { food:'🍽️', spot:'📍', hotel:'🏨', transport:'🚃', drink:'🍺' };
+
+function clearMap() { markers.forEach(m=>map.removeLayer(m)); polylines.forEach(p=>map.removeLayer(p)); markers=[]; polylines=[]; }
+
+function showDay(idx) {
+  clearMap();
+  if (idx === 0) {
+    const pts = [];
+    DAYS.forEach(d => d.locations.forEach(l => { if(l.lat) pts.push([l.lat,l.lng]); }));
+    if(pts.length) map.fitBounds(pts, {padding:[30,30]});
+    DAYS.slice(1).forEach(d => {
+      d.locations.filter(l=>l.time!=='—').forEach(l => {
+        const m = L.circleMarker([l.lat,l.lng], { radius:4, fillColor:d.color, color:'#fff', weight:1.5, fillOpacity:.9 }).addTo(map).bindPopup(`<b>${l.name}</b><br><span style="color:#86868b">${d.label}</span>`);
+        markers.push(m);
+      });
+    });
+    return;
+  }
+  const day = DAYS.find(d=>d.id===idx);
+  if(!day) return;
+  const coords = [];
+  day.locations.forEach(l => {
+    if(!l.lat) return;
+    const m = L.marker([l.lat,l.lng], { icon: icon(day.color, emojis[l.type]||'📌') }).addTo(map);
+    const gmapQ = l.gmap||encodeURIComponent(l.name);
+    m.bindPopup(`<b>${l.name}</b>${l.time!=='—'?'<br><span style="color:#86868b">'+l.time+'</span>':''}<br>${l.desc}${l.budget?'<br><span style="color:#ff9500">'+l.budget+'</span>':''}<br><a href="#" onclick="event.preventDefault();openAS('${l.name.replace(/'/g,"\\'")}',${l.lat},${l.lng},'${gmapQ}')">📍 导航</a>${l.xhs?' · <a href="'+l.xhs+'" target="_blank">📕 小红书</a>':''}`);
+    markers.push(m);
+    if(l.time!=='—') coords.push([l.lat,l.lng]);
+  });
+  if(coords.length>1) { const pl = L.polyline(coords, { color:day.color, weight:2.5, opacity:.5, dashArray:'6,5' }).addTo(map); polylines.push(pl); }
+  if(coords.length) map.fitBounds(coords, { padding:[40,40], maxZoom:14 });
+}
+
+// ══════════ RENDER ══════════
+function payChips(pay) {
+  if(!pay) return '';
+  let h = '<div class="pays">';
+  const m = { cash:'💴', card:'💳', suica:'Suica', paypay:'PayPay', alipay:'支付宝', wechat:'微信' };
+  for(const [k,label] of Object.entries(m)) {
+    if(pay[k]!==undefined) { const c = pay[k]===1?'ok':pay[k]===0.5?'idk':'no'; h += `<span class="pay ${c}">${label}</span>`; }
+  }
+  return h+'</div>';
+}
+
+// ── 运行环境检测：在第三方 App 的 WebView 里，自定义 scheme 基本会被拦截 ──
+const IN_APP_WEBVIEW = (() => {
+  const ua = (navigator.userAgent || '').toLowerCase();
+  return /micromessenger|xhs|xhsdiscover|discover\/|tiktok|aweme|weibo|qq\/|qqbrowser|alipayclient|dingtalk|lark|feishu|ucbrowser|baiduboxapp|toutiao|newsarticle/.test(ua);
+})();
+
+/* ── 深链统一调度：先尝试拉起 App，1.2s 内没切走就判定失败 → 降级网页版/应用商店 ──
+   关键点：scheme 必须在点击事件同步栈里触发，且必须用 location.href 而不是 window.open，
+   否则 iOS Safari 与微信 WebView 会静默拦截。 */
+function tryDeepLink(scheme, fallbackUrl, appStoreUrl) {
+  let left = false;
+  const mark = () => { left = true; };
+  document.addEventListener('visibilitychange', mark, { once: true });
+  window.addEventListener('pagehide', mark, { once: true });
+  window.addEventListener('blur', mark, { once: true });
+
+  const t = setTimeout(() => {
+    document.removeEventListener('visibilitychange', mark);
+    if (left || document.hidden) return;      // 已切到 App，什么都不做
+    // 没切走 → 大概率没装或 scheme 被拦
+    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      window.location.href = appStoreUrl;     // App Store 里已有该 App 会直接显示"打开"
+    } else {
+      window.location.href = fallbackUrl;     // 安卓落到网页版
+    }
+  }, 1200);
+  window.addEventListener('pagehide', () => clearTimeout(t), { once: true });
+
+  // 同步触发
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  iframe.src = scheme;
+  document.body.appendChild(iframe);
+  setTimeout(() => iframe.remove(), 1500);
+  window.location.href = scheme;
+}
+
+function xhsKeyword(loc) {
+  if(loc.xhsKeyword) return loc.xhsKeyword.trim();
+  return (loc.name||'').replace(/⭐.*$/g,'').replace(/（.*?）/g,'').replace(/\(.*?\)/g,'').replace(/\s+/g,' ').trim();
+}
+function xhsAppUrl(loc) { return `xhsdiscover://search/result?keyword=${encodeURIComponent(xhsKeyword(loc))}&target_search=notes&source=deeplink`; }
+function xhsWebUrl(loc) { return `https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(xhsKeyword(loc))}&source=web_explore_feed`; }
+
+function dpKeyword(loc) {
+  if(loc.dianpingKeyword) return loc.dianpingKeyword.trim();
+  return (loc.name||'').replace(/⭐.*$/g,'').replace(/（.*?）/g,'').replace(/\(.*?\)/g,'').replace(/\s+/g,' ').trim();
+}
+function dpAppUrl(loc) { return `dianping://searchshoplist?keyword=${encodeURIComponent(dpKeyword(loc))}`; }
+function dpWebUrl(loc) { return `https://m.dianping.com/searchshop?keyword=${encodeURIComponent(dpKeyword(loc))}`; }
+const DP_STORE  = 'https://apps.apple.com/cn/app/id351091731';
+const XHS_STORE = 'https://apps.apple.com/cn/app/id741292507';
+
+window._extLocs = {};
+DAYS.forEach(d => d.locations.forEach(l => { window._extLocs[`${d.id}::${l.name}`] = l; }));
+window._xhsLocs = window._extLocs;
+
+function openExt(key, kind) {
+  const loc = window._extLocs[key]; if(!loc) return false;
+  // 已装 App：任何环境都优先尝试拉起 App（微信内需用户手动点右上角"在浏览器打开"，见页面顶部提示）
+  const scheme = kind==='dp' ? dpAppUrl(loc) : xhsAppUrl(loc);
+  const web    = kind==='dp' ? dpWebUrl(loc) : xhsWebUrl(loc);
+  const store  = kind==='dp' ? DP_STORE : XHS_STORE;
+  if (IN_APP_WEBVIEW) {
+    // 微信/QQ 等 WebView 对内嵌 iframe 与 scheme 的拦截无法绕过，只能给网页版
+    window.location.href = web;
+  } else {
+    tryDeepLink(scheme, web, store);
+  }
+  return false;
+}
+function openXhs(key) { return openExt(key, 'xhs'); }
+function openDp(key)  { return openExt(key, 'dp'); }
+
+/* ── 兜底：长按按钮复制搜索词，方便自己粘到 App 搜索框 ── */
+function showTip(msg) {
+  let tip = document.getElementById('copyTip');
+  if (!tip) { tip = document.createElement('div'); tip.id = 'copyTip'; document.body.appendChild(tip); }
+  tip.textContent = msg; tip.classList.add('show');
+  clearTimeout(window._tipT);
+  window._tipT = setTimeout(() => tip.classList.remove('show'), 1800);
+}
+function copyText(text, label) {
+  const done = () => showTip(`已复制「${text}」，去${label}粘贴搜索`);
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else { fallbackCopy(text, done); }
+}
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); cb(); } catch(e) { showTip('复制失败，请手动长按选中'); }
+  ta.remove();
+}
+(function bindLongPress() {
+  let timer = null;
+  document.addEventListener('touchstart', e => {
+    const btn = e.target.closest('.btn.xhs, .btn.dp');
+    if (!btn) return;
+    const key = btn.dataset.key; if (!key) return;
+    const loc = window._extLocs[key]; if (!loc) return;
+    const isXhs = btn.classList.contains('xhs');
+    const kw = isXhs ? xhsKeyword(loc) : dpKeyword(loc);
+    timer = setTimeout(() => {
+      timer = null;
+      if (navigator.vibrate) navigator.vibrate(12);
+      copyText(kw, isXhs ? '小红书' : '大众点评');
+      btn.dataset.longPressed = '1';
+    }, 550);
+  }, { passive: true });
+  const clear = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  document.addEventListener('touchend', e => {
+    clear();
+    const btn = e.target.closest('.btn.xhs, .btn.dp');
+    if (btn && btn.dataset.longPressed === '1') {
+      e.preventDefault(); e.stopPropagation();
+      delete btn.dataset.longPressed;
+    }
+  }, { passive: false });
+  document.addEventListener('touchmove', clear, { passive: true });
+  document.addEventListener('touchcancel', clear, { passive: true });
+})();
+
+function locCard(loc, dayIdx) {
+  const dot = loc.type==='food'?'food':loc.type==='spot'?'spot':loc.type==='drink'?'drink':loc.type==='hotel'?'hotel':'transport';
+  const bdg = loc.type==='food'?'<span class="badge food">餐</span>':loc.type==='spot'?'<span class="badge spot">景</span>':loc.type==='drink'?'<span class="badge drink">饮</span>':'';
+  const uid = `d${dayIdx}-${loc.name.replace(/\W/g,'')}`;
+  const locKey = `${dayIdx}::${loc.name}`;
+  const gmapQ = loc.gmap||encodeURIComponent(loc.name);
+  let lnk = `<button class="btn nav" onclick="openAS('${loc.name.replace(/'/g,"\\'")}',${loc.lat},${loc.lng},'${gmapQ}')">📍 导航</button>`;
+  // 小红书：所有点位都给入口（没配 xhsKeyword 时用点位名自动生成搜索词）
+  const xhsEnabled = loc.xhs !== false && loc.type !== 'transport';
+  if(xhsEnabled) {
+    lnk += `<a href="#" data-key="${locKey.replace(/"/g,'&quot;')}" onclick="return openXhs('${locKey.replace(/'/g,"\\'")}')" class="btn xhs">📕 小红书</a>`;
+  }
+  const dpEnabled = loc.dianping !== false &&
+    (loc.dianping || loc.dianpingKeyword || loc.type==='food' || loc.type==='drink');
+
+  if(dpEnabled) {
+    lnk += `<a href="#" data-key="${locKey.replace(/"/g,'&quot;')}" onclick="return openDp('${locKey.replace(/'/g,"\\'")}')" class="btn dp">🍜 大众点评</a>`;
+  }
+  if(loc.reserve) lnk += `<a href="${loc.reserve}" target="_blank" class="btn rsv">📅 预约</a>`;
+  return `<div class="tl-item"><div class="tl-dot ${dot}"></div><div class="card" onclick="if(!event.target.closest('.btn,.links'))toggle('${uid}')"><div class="time">${loc.time!=='—'?loc.time:'备选'}</div><div class="name">${bdg} ${loc.name}</div><div class="desc">${loc.desc}</div>${loc.budget?'<div class="budget">'+loc.budget+'</div>':''}${payChips(loc.pay)}<div class="links">${lnk}</div>${loc.detail?'<div class="details" id="'+uid+'">'+loc.detail.replace(/\n/g,'<br>')+'</div>':''}</div></div>`;
+}
+
+function renderDay(idx) {
+  const d = DAYS.find(x=>x.id===idx); if(!d) return '';
+  const main = d.locations.filter(l=>l.time!=='—');
+  const alt = d.locations.filter(l=>l.time==='—');
+  let h = `<div class="day-head"><h2>${d.title}</h2><p>${d.date}</p></div>`;
+  if(main.length) { h += '<div class="section-head">行程</div><div class="timeline">'; main.forEach(l => h += locCard(l, idx)); h += '</div>'; }
+  if(alt.length) { h += '<div class="section-head">备选</div><div class="timeline">'; alt.forEach(l => h += locCard(l, idx)); h += '</div>'; }
+  return h;
+}
+
+// ══════════ NAV ══════════
+let cur = 0;
+const tabsEl = document.getElementById('tabs');
+const contentEl = document.getElementById('content');
+
+DAYS.forEach(d => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (d.id===0?' active':'');
+  btn.dataset.day = d.id;
+  btn.textContent = d.label;
+  tabsEl.appendChild(btn);
+});
+
+function go(idx) {
+  cur = idx;
+  tabsEl.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', +t.dataset.day===idx));
+  contentEl.innerHTML = idx===0 ? overviewContent() : renderDay(idx);
+  showDay(idx);
+  contentEl.scrollTo({top:0});
+  const tab = tabsEl.querySelector(`[data-day="${idx}"]`);
+  if(tab) tab.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+}
+
+function toggle(id) { const el=document.getElementById(id); if(el) el.classList.toggle('closed'); }
+
+tabsEl.addEventListener('click', e => { const t=e.target.closest('.tab'); if(t) go(+t.dataset.day); });
+
+go(0);
+
+/* ── Action Sheet for Navigation ── */
+const asOverlay = document.createElement('div');
+asOverlay.className = 'as-overlay';
+asOverlay.innerHTML = `<div class="as-sheet">
+  <div class="as-group" id="as-opts"></div>
+  <div class="as-group"><button class="as-item as-cancel" onclick="closeAS()">取消</button></div>
+</div>`;
+document.body.appendChild(asOverlay);
+asOverlay.addEventListener('click', e => { if (e.target === asOverlay) closeAS(); });
+
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+/* ── 高德：统一走 https://uri.amap.com，callnative=1 会自动尝试拉起高德 App，
+      未装 App 时落到高德网页版，任何浏览器/WebView 都不会失效 ── */
+function amapNavUrl(name, lat, lng) {
+  //导航：dnav 方式直接进入路线规划（可横向对比方案并点"开始导航"）
+  return `https://uri.amap.com/navigation?to=${lng},${lat},${encodeURIComponent(name)}&mode=car&policy=1&src=trip&coordinate=gaode&callnative=1`;
+}
+function amapMarkUrl(name, lat, lng) {
+  //查看点位（marker）：展示位置详情
+  return `https://uri.amap.com/marker?position=${lng},${lat}&name=${encodeURIComponent(name)}&src=trip&coordinate=gaode&callnative=1`;
+}
+function openAmap(name, lat, lng) {
+  window.location.href = amapNavUrl(name, lat, lng);
+}
+
+function openAS(name, lat, lng, gmap) {
+  const q = gmap || encodeURIComponent(name);
+  const encName = encodeURIComponent(name);
+  const safeName = name.replace(/'/g,"\\'");
+  const appleUrl = `https://maps.apple.com/?q=${lat},${lng}&ll=${lat},${lng}&name=${encName}`;
+  const googleUrl = `https://www.google.com/maps/search/?api=1&query=${q}`;
+  document.getElementById('as-opts').innerHTML =
+    `<button class="as-item" onclick="openAmap('${safeName}',${lat},${lng});closeAS()">🧭 高德地图 · 导航（自动拉起 App）</button>` +
+    `<button class="as-item" onclick="window.location.href='${amapMarkUrl(safeName,lat,lng)}';closeAS()">📍 高德地图 · 查看位置</button>` +
+    `<button class="as-item" onclick="window.open('${appleUrl}');closeAS()">🍎 Apple Maps</button>` +
+    `<button class="as-item" onclick="window.open('${googleUrl}');closeAS()">🗺️ Google Maps</button>`;
+  asOverlay.classList.add('show');
+}
+function closeAS() { asOverlay.classList.remove('show'); }
+</script>
+</body>
+</html>
